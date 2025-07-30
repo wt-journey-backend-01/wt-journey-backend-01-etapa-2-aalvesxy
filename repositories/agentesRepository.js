@@ -22,6 +22,12 @@ const findAll = (filters) => {
         agentesFiltrados = agentesFiltrados.filter(agente => agente.cargo.toLowerCase() === filters.cargo.toLowerCase());
     }
 
+    // LÓGICA DE FILTRO POR DATA
+    if (filters.dataDeIncorporacao) {
+        // Filtra agentes incorporados a partir da data fornecida
+        agentesFiltrados = agentesFiltrados.filter(agente => new Date(agente.dataDeIncorporacao) >= new Date(filters.dataDeIncorporacao));
+    }
+
     if (filters.sort === 'dataDeIncorporacao') {
         agentesFiltrados.sort((a, b) => new Date(a.dataDeIncorporacao) - new Date(b.dataDeIncorporacao));
     } else if (filters.sort === '-dataDeIncorporacao') {

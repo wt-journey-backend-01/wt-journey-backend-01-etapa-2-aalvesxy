@@ -39,22 +39,19 @@ const getAgenteByCasoId = (req, res) => {
 
 const createCaso = (req, res) => {
     const { titulo, descricao, status, agente_id } = req.body;
-    const errors = [];
 
     if (!titulo || !descricao || !status || !agente_id) {
         return sendErrorResponse(res, 400, 'Campos obrigatórios ausentes: titulo, descricao, status, agente_id.');
     }
     
+    // Validação do Status
     if (status !== 'aberto' && status !== 'solucionado') {
-        errors.push({ status: "O campo 'status' pode ser somente 'aberto' ou 'solucionado'" });
+        return sendErrorResponse(res, 400, "Parâmetros inválidos", [{ status: "O campo 'status' pode ser somente 'aberto' ou 'solucionado'" }]);
     }
-
+    
+    // Validação do agente_id (retornando 404 conforme o novo feedback)
     if (!agentesRepository.findById(agente_id)) {
-        errors.push({ agente_id: "O 'agente_id' fornecido não corresponde a um agente existente." });
-    }
-
-    if (errors.length > 0) {
-        return sendErrorResponse(res, 400, "Parâmetros inválidos", errors);
+        return sendErrorResponse(res, 404, "Agente responsável pelo caso não foi encontrado.");
     }
 
     const novoCaso = casosRepository.create({ titulo, descricao, status, agente_id });
@@ -69,12 +66,10 @@ const updateCaso = (req, res) => {
         return sendErrorResponse(res, 404, 'Caso não encontrado.');
     }
     
-    // Validação para impedir alteração do ID
     if (req.body.id) {
         return sendErrorResponse(res, 400, 'O campo "id" não pode ser alterado.');
     }
     
-    // Validação para PUT
     if (req.method === 'PUT' && (!req.body.titulo || !req.body.descricao || !req.body.status || !req.body.agente_id)) {
         return sendErrorResponse(res, 400, 'Para atualização completa (PUT), todos os campos são obrigatórios.');
     }
@@ -85,6 +80,8 @@ const updateCaso = (req, res) => {
     }
 
     if (req.body.agente_id && !agentesRepository.findById(req.body.agente_id)) {
+        // Para PUT/PATCH, se o agente não existe, o erro é de Bad Request, pois o cliente está tentando
+        // associar um caso a um recurso que não existe.
         errors.push({ agente_id: "O 'agente_id' fornecido não corresponde a um agente existente." });
     }
 
