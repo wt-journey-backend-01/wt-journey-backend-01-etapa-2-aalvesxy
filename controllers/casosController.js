@@ -31,7 +31,6 @@ const getAgenteByCasoId = (req, res) => {
 
     const agente = agentesRepository.findById(caso.agente_id);
     if (!agente) {
-        // Inconsistência de dados, mas o agente pode ter sido removido
         return sendErrorResponse(res, 404, 'Agente responsável pelo caso não foi encontrado.');
     }
 
@@ -43,7 +42,7 @@ const createCaso = (req, res) => {
     const errors = [];
 
     if (!titulo || !descricao || !status || !agente_id) {
-        return sendErrorResponse(res, 400, 'Campos obrigatórios ausentes.');
+        return sendErrorResponse(res, 400, 'Campos obrigatórios ausentes: titulo, descricao, status, agente_id.');
     }
     
     if (status !== 'aberto' && status !== 'solucionado') {
@@ -70,20 +69,22 @@ const updateCaso = (req, res) => {
         return sendErrorResponse(res, 404, 'Caso não encontrado.');
     }
     
-    // Remove 'id' do corpo da requisição
-    const { id: idDoBody, ...dadosParaAtualizar } = req.body;
-
+    // Validação para impedir alteração do ID
+    if (req.body.id) {
+        return sendErrorResponse(res, 400, 'O campo "id" não pode ser alterado.');
+    }
+    
     // Validação para PUT
-    if (req.method === 'PUT' && (!dadosParaAtualizar.titulo || !dadosParaAtualizar.descricao || !dadosParaAtualizar.status || !dadosParaAtualizar.agente_id)) {
+    if (req.method === 'PUT' && (!req.body.titulo || !req.body.descricao || !req.body.status || !req.body.agente_id)) {
         return sendErrorResponse(res, 400, 'Para atualização completa (PUT), todos os campos são obrigatórios.');
     }
 
     const errors = [];
-    if (dadosParaAtualizar.status && (dadosParaAtualizar.status !== 'aberto' && dadosParaAtualizar.status !== 'solucionado')) {
+    if (req.body.status && (req.body.status !== 'aberto' && req.body.status !== 'solucionado')) {
         errors.push({ status: "O campo 'status' pode ser somente 'aberto' ou 'solucionado'" });
     }
 
-    if (dadosParaAtualizar.agente_id && !agentesRepository.findById(dadosParaAtualizar.agente_id)) {
+    if (req.body.agente_id && !agentesRepository.findById(req.body.agente_id)) {
         errors.push({ agente_id: "O 'agente_id' fornecido não corresponde a um agente existente." });
     }
 
@@ -91,7 +92,7 @@ const updateCaso = (req, res) => {
         return sendErrorResponse(res, 400, "Parâmetros inválidos", errors);
     }
     
-    const casoAtualizado = casosRepository.update(id, dadosParaAtualizar);
+    const casoAtualizado = casosRepository.update(id, req.body);
     res.status(200).json(casoAtualizado);
 };
 

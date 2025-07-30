@@ -3,7 +3,17 @@ const { sendErrorResponse } = require('../utils/errorHandler');
 
 const validateDate = (dateString) => {
     const regex = /^\d{4}-\d{2}-\d{2}$/;
-    return regex.test(dateString);
+    if (!regex.test(dateString)) return false; // Verifica o formato primeiro
+
+    const inputDate = new Date(dateString);
+    
+    inputDate.setUTCHours(0, 0, 0, 0);
+
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+
+    // A data de entrada não pode ser posterior a hoje
+    return inputDate <= today;
 };
 
 const getAllAgentes = (req, res) => {
@@ -30,11 +40,11 @@ const createAgente = (req, res) => {
     const errors = [];
 
     if (!nome || !dataDeIncorporacao || !cargo) {
-        return sendErrorResponse(res, 400, 'Campos obrigatórios ausentes.');
+        return sendErrorResponse(res, 400, 'Campos obrigatórios ausentes: nome, dataDeIncorporacao, cargo.');
     }
 
     if (!validateDate(dataDeIncorporacao)) {
-        errors.push({ dataDeIncorporacao: "Campo dataDeIncorporacao deve seguir a formatação 'YYYY-MM-DD'" });
+        errors.push({ dataDeIncorporacao: "Campo dataDeIncorporacao deve seguir a formatação 'YYYY-MM-DD' e não pode ser uma data futura." });
     }
 
     if (errors.length > 0) {
@@ -53,24 +63,26 @@ const updateAgente = (req, res) => {
         return sendErrorResponse(res, 404, 'Agente não encontrado.');
     }
 
-    // Remove 'id' do corpo da requisição para evitar que ele seja atualizado
-    const { id: idDoBody, ...dadosParaAtualizar } = req.body;
-
+    // Validação para impedir alteração do ID
+    if (req.body.id) {
+        return sendErrorResponse(res, 400, 'O campo "id" não pode ser alterado.');
+    }
+    
     // Validação para PUT (todos os campos obrigatórios)
-    if (req.method === 'PUT' && (!dadosParaAtualizar.nome || !dadosParaAtualizar.dataDeIncorporacao || !dadosParaAtualizar.cargo)) {
+    if (req.method === 'PUT' && (!req.body.nome || !req.body.dataDeIncorporacao || !req.body.cargo)) {
         return sendErrorResponse(res, 400, 'Para atualização completa (PUT), todos os campos são obrigatórios: nome, dataDeIncorporacao, cargo.');
     }
     
     const errors = [];
-    if (dadosParaAtualizar.dataDeIncorporacao && !validateDate(dadosParaAtualizar.dataDeIncorporacao)) {
-        errors.push({ dataDeIncorporacao: "Campo dataDeIncorporacao deve seguir a formatação 'YYYY-MM-DD' e não pode ser no futuro." });
+    if (req.body.dataDeIncorporacao && !validateDate(req.body.dataDeIncorporacao)) {
+        errors.push({ dataDeIncorporacao: "Campo dataDeIncorporacao deve seguir a formatação 'YYYY-MM-DD' e não pode ser uma data futura." });
     }
 
     if (errors.length > 0) {
         return sendErrorResponse(res, 400, "Parâmetros inválidos", errors);
     }
     
-    const agenteAtualizado = agentesRepository.update(id, dadosParaAtualizar);
+    const agenteAtualizado = agentesRepository.update(id, req.body);
     res.status(200).json(agenteAtualizado);
 };
 
