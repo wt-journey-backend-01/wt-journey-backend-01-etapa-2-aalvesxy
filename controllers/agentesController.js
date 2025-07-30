@@ -53,23 +53,24 @@ const updateAgente = (req, res) => {
         return sendErrorResponse(res, 404, 'Agente não encontrado.');
     }
 
-    const { nome, dataDeIncorporacao, cargo } = req.body;
-    
+    // Remove 'id' do corpo da requisição para evitar que ele seja atualizado
+    const { id: idDoBody, ...dadosParaAtualizar } = req.body;
+
     // Validação para PUT (todos os campos obrigatórios)
-    if (req.method === 'PUT' && (!nome || !dataDeIncorporacao || !cargo)) {
+    if (req.method === 'PUT' && (!dadosParaAtualizar.nome || !dadosParaAtualizar.dataDeIncorporacao || !dadosParaAtualizar.cargo)) {
         return sendErrorResponse(res, 400, 'Para atualização completa (PUT), todos os campos são obrigatórios: nome, dataDeIncorporacao, cargo.');
     }
     
     const errors = [];
-    if (dataDeIncorporacao && !validateDate(dataDeIncorporacao)) {
-        errors.push({ dataDeIncorporacao: "Campo dataDeIncorporacao deve seguir a formatação 'YYYY-MM-DD'" });
+    if (dadosParaAtualizar.dataDeIncorporacao && !validateDate(dadosParaAtualizar.dataDeIncorporacao)) {
+        errors.push({ dataDeIncorporacao: "Campo dataDeIncorporacao deve seguir a formatação 'YYYY-MM-DD' e não pode ser no futuro." });
     }
 
     if (errors.length > 0) {
         return sendErrorResponse(res, 400, "Parâmetros inválidos", errors);
     }
     
-    const agenteAtualizado = agentesRepository.update(id, req.body);
+    const agenteAtualizado = agentesRepository.update(id, dadosParaAtualizar);
     res.status(200).json(agenteAtualizado);
 };
 

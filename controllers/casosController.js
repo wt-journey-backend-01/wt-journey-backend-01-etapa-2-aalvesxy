@@ -50,7 +50,7 @@ const createCaso = (req, res) => {
         errors.push({ status: "O campo 'status' pode ser somente 'aberto' ou 'solucionado'" });
     }
 
-    if (agentesRepository.findById(agente_id) === undefined) {
+    if (!agentesRepository.findById(agente_id)) {
         errors.push({ agente_id: "O 'agente_id' fornecido não corresponde a um agente existente." });
     }
 
@@ -70,19 +70,20 @@ const updateCaso = (req, res) => {
         return sendErrorResponse(res, 404, 'Caso não encontrado.');
     }
     
-    const { titulo, descricao, status, agente_id } = req.body;
+    // Remove 'id' do corpo da requisição
+    const { id: idDoBody, ...dadosParaAtualizar } = req.body;
 
     // Validação para PUT
-    if (req.method === 'PUT' && (!titulo || !descricao || !status || !agente_id)) {
+    if (req.method === 'PUT' && (!dadosParaAtualizar.titulo || !dadosParaAtualizar.descricao || !dadosParaAtualizar.status || !dadosParaAtualizar.agente_id)) {
         return sendErrorResponse(res, 400, 'Para atualização completa (PUT), todos os campos são obrigatórios.');
     }
 
     const errors = [];
-    if (status && (status !== 'aberto' && status !== 'solucionado')) {
+    if (dadosParaAtualizar.status && (dadosParaAtualizar.status !== 'aberto' && dadosParaAtualizar.status !== 'solucionado')) {
         errors.push({ status: "O campo 'status' pode ser somente 'aberto' ou 'solucionado'" });
     }
 
-    if (agente_id && agentesRepository.findById(agente_id) === undefined) {
+    if (dadosParaAtualizar.agente_id && !agentesRepository.findById(dadosParaAtualizar.agente_id)) {
         errors.push({ agente_id: "O 'agente_id' fornecido não corresponde a um agente existente." });
     }
 
@@ -90,7 +91,7 @@ const updateCaso = (req, res) => {
         return sendErrorResponse(res, 400, "Parâmetros inválidos", errors);
     }
     
-    const casoAtualizado = casosRepository.update(id, req.body);
+    const casoAtualizado = casosRepository.update(id, dadosParaAtualizar);
     res.status(200).json(casoAtualizado);
 };
 
