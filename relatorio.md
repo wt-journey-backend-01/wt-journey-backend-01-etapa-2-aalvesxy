@@ -1,90 +1,107 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 8 créditos restantes para usar o sistema de feedback AI.
+Você tem 7 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para aalvesxy:
 
-Nota final: **80.6/100**
+Nota final: **94.3/100**
 
-Olá, aalvesxy! 👋😊
+# Feedback do seu desafio da API do Departamento de Polícia 🚓🚀
 
-Primeiramente, parabéns pelo esforço e dedicação na construção dessa API para o Departamento de Polícia! 🎉 Seu projeto está bem estruturado, com uma organização clara entre rotas, controladores e repositórios, o que é fundamental para um código limpo e escalável. Além disso, você implementou corretamente os principais métodos HTTP para os recursos `/agentes` e `/casos`, e fez um ótimo trabalho com as validações básicas e tratamento de erros personalizados — isso é um diferencial que mostra cuidado com a experiência do usuário da API. 👏
-
----
-
-## 🚀 Pontos Fortes que Merecem Destaque
-
-- Você organizou muito bem as rotas usando `express.Router()` nos arquivos `routes/agentesRoutes.js` e `routes/casosRoutes.js`, deixando o `server.js` enxuto e focado apenas em configurar o servidor e os middlewares.
-- Os controladores (`controllers/agentesController.js` e `controllers/casosController.js`) estão claros, com funções bem definidas para cada operação.
-- O uso dos repositórios para manipular os dados em memória está correto, usando arrays e funções para criar, buscar, atualizar e remover dados.
-- Você implementou mensagens de erro customizadas, o que é um toque profissional e ajuda muito no entendimento dos erros.
-- Os filtros para casos e agentes foram implementados com sucesso em vários pontos, especialmente a filtragem por status e agente, e o uso do campo `q` para busca no título e descrição dos casos.
-- O tratamento dos status HTTP está adequado, retornando 200, 201, 204 e os códigos de erro 400 e 404 quando necessário.
+Olá, aalvesxy! Que jornada incrível você fez até aqui! 🎉 Seu código mostra uma dedicação muito boa em implementar uma API RESTful organizada, modular e funcional. Parabéns por conseguir entregar quase tudo com muita qualidade — sua nota de 94.3 é um baita reconhecimento! 👏👏
 
 ---
 
-## 🔍 Análise Profunda dos Pontos que Precisam de Atenção
+## 🎯 Pontos Fortes e Conquistas Bônus
 
-### 1. Validação da Data de Incorporação no Futuro — Cuidado com a Integridade dos Dados! ⏳
+Antes de qualquer coisa, vamos celebrar suas vitórias, porque elas merecem!
 
-Eu vi no seu `agentesController.js` que você valida o formato da data de incorporação, o que é ótimo:
+- Você estruturou seu projeto de forma muito organizada, seguindo a arquitetura modular com **routes**, **controllers**, **repositories** e **utils**. Isso é fundamental para manter o código limpo e escalável. 👏  
+- Sua implementação dos métodos HTTP para os recursos `/agentes` e `/casos` está muito bem feita: GET, POST, PUT, PATCH e DELETE estão todos lá, com validações e tratamentos de erro apropriados.  
+- O uso do `uuid` para gerar IDs únicos está perfeito, garantindo que seus dados em memória tenham identificadores confiáveis.  
+- Você implementou filtros simples para os casos, como por status e agente, e criou mensagens de erro customizadas para agentes inválidos — isso mostra atenção aos detalhes e preocupação com a experiência do usuário da API.  
+- A validação da data de incorporação dos agentes está muito bem feita, garantindo que datas futuras não sejam aceitas.  
+- O tratamento de erros com mensagens claras e status HTTP corretos está coerente na maior parte do código.  
 
-```js
-const validateDate = (dateString) => {
-    const regex = /^\d{4}-\d{2}-\d{2}$/;
-    return regex.test(dateString);
-};
-```
-
-Porém, essa validação não impede que datas futuras sejam cadastradas, e isso gerou uma penalidade. Para garantir que a data não seja no futuro, você pode complementar sua função assim:
-
-```js
-const validateDate = (dateString) => {
-    const regex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!regex.test(dateString)) return false;
-
-    const date = new Date(dateString);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Ignorar horário para comparação só da data
-
-    return date <= today;
-};
-```
-
-Assim, você assegura que a data seja válida e não ultrapasse o dia atual. Isso evita inconsistências nos dados dos agentes, que são críticos para o sistema.
-
-**Recomendo conferir este vídeo para aprofundar na validação de dados em APIs Node.js/Express:**  
-https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_
+Isso tudo mostra que você domina muito bem os fundamentos do Express.js e sabe como organizar uma API RESTful. Parabéns mesmo! 🎉🎉
 
 ---
 
-### 2. Proteção do Campo `id` na Atualização (PUT e PATCH) — Evite Modificar IDs! 🔐
+## 🔍 Pontos para Melhorar e Aprimorar
 
-Percebi que nos métodos de atualização tanto para agentes quanto para casos, o campo `id` pode estar sendo alterado se enviado no corpo da requisição. Isso é um problema porque o `id` deve ser imutável, servindo como identificador único.
+Agora vamos para os detalhes que podem te ajudar a destravar 100% do seu potencial e corrigir as falhas que encontrei na sua API.
 
-No seu código do controlador, você tenta evitar isso com:
+### 1. Validação e Tratamento de Erro no PATCH para Atualização Parcial de Agente
 
-```js
-const { id: idDoBody, ...dadosParaAtualizar } = req.body;
-```
+Vi que o teste para atualizar parcialmente um agente com PATCH e payload em formato incorreto está falhando. Isso indica que seu código não está validando corretamente o formato dos dados no PATCH, ou não está retornando o status 400 quando o payload está errado.
 
-Mas não vi nenhuma validação explícita que rejeite o caso quando o `id` é enviado no body. Isso pode permitir que alguém altere o `id` enviando-o no payload, o que não é seguro.
-
-**Sugestão de melhoria:** Rejeitar a requisição com erro 400 caso o corpo contenha o campo `id`. Algo assim:
+Analisando seu `agentesController.js` no método `updateAgente`, você faz validações para PUT (requisição completa) e para o campo `dataDeIncorporacao`, mas não vi uma validação explícita para o formato do payload em PATCH, além de verificar se o campo `id` está sendo alterado.
 
 ```js
-if ('id' in req.body) {
-    return sendErrorResponse(res, 400, 'O campo "id" não pode ser alterado.');
+// trecho do updateAgente
+if (req.method === 'PUT' && (!req.body.nome || !req.body.dataDeIncorporacao || !req.body.cargo)) {
+    return sendErrorResponse(res, 400, 'Para atualização completa (PUT), todos os campos são obrigatórios: nome, dataDeIncorporacao, cargo.');
 }
 ```
 
-Você pode colocar essa validação logo no início da função `updateAgente` e `updateCaso`. Isso vai garantir que o `id` permaneça intacto.
+**O que falta?**  
+No PATCH, você deveria validar se os campos enviados são válidos e estão no formato correto. Por exemplo, se o payload contém campos inesperados, ou campos obrigatórios com formato errado, você deve retornar 400. Além disso, se o payload estiver vazio (nenhum campo para atualizar), também deve retornar erro.
+
+**Sugestão de melhoria:**
+
+- Adicione uma validação que verifique se o corpo da requisição tem pelo menos um campo válido para atualizar.
+- Valide os campos que vieram, certificando-se que estão no formato esperado (ex: `dataDeIncorporacao` no formato correto).
+- Retorne status 400 com uma mensagem clara se o payload estiver incorreto.
+
+Exemplo simplificado:
+
+```js
+const allowedFields = ['nome', 'dataDeIncorporacao', 'cargo'];
+
+const updateAgente = (req, res) => {
+    const { id } = req.params;
+    const agente = agentesRepository.findById(id);
+
+    if (!agente) {
+        return sendErrorResponse(res, 404, 'Agente não encontrado.');
+    }
+
+    if (req.body.id) {
+        return sendErrorResponse(res, 400, 'O campo "id" não pode ser alterado.');
+    }
+
+    // Verifica se o payload tem pelo menos um campo permitido
+    const fieldsToUpdate = Object.keys(req.body);
+    if (fieldsToUpdate.length === 0) {
+        return sendErrorResponse(res, 400, 'Nenhum campo para atualizar foi fornecido.');
+    }
+
+    // Checa se todos os campos são permitidos
+    const invalidFields = fieldsToUpdate.filter(field => !allowedFields.includes(field));
+    if (invalidFields.length > 0) {
+        return sendErrorResponse(res, 400, `Campos inválidos no payload: ${invalidFields.join(', ')}`);
+    }
+
+    // Valida dataDeIncorporacao se presente
+    if (req.body.dataDeIncorporacao && !validateDate(req.body.dataDeIncorporacao)) {
+        return sendErrorResponse(res, 400, "Campo dataDeIncorporacao deve seguir a formatação 'YYYY-MM-DD' e não pode ser uma data futura.");
+    }
+
+    const agenteAtualizado = agentesRepository.update(id, req.body);
+    res.status(200).json(agenteAtualizado);
+};
+```
+
+👉 Isso vai garantir que o PATCH só aceite dados válidos e retorne erros adequados, como esperado pela API.
+
+**Para aprender mais sobre validação e tratamento de erros em APIs Express, recomendo este vídeo super didático:**  
+[Como fazer validação de dados em APIs Node.js/Express](https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_)
 
 ---
 
-### 3. Falha ao Criar Caso com `agente_id` Inválido/Inexistente — Validação Completa, mas Atenção ao Fluxo! ⚠️
+### 2. Criação de Caso com `agente_id` Inválido/Inexistente
 
-Você já faz uma ótima validação no `createCaso` para garantir que o `agente_id` exista:
+Você fez uma ótima validação no `createCaso` para garantir que o `agente_id` exista no repositório de agentes:
 
 ```js
 if (!agentesRepository.findById(agente_id)) {
@@ -92,21 +109,65 @@ if (!agentesRepository.findById(agente_id)) {
 }
 ```
 
-Porém, o teste indica que ainda ocorre um erro 404 ao tentar criar caso com `agente_id` inválido, quando o correto seria um erro 400 (Bad Request) para dados mal formatados ou inválidos.
+Porém, percebi que o teste falha com status 404 ao tentar criar um caso com um `agente_id` inválido. Isso indica que sua API está retornando 400 (Bad Request) com mensagem de erro, mas o teste espera 404 (Not Found) para esse cenário.
 
-Aqui, a raiz do problema é que o código está retornando 404 em algumas situações onde deveria ser 400, ou vice-versa.
+**Análise de causa raiz:**  
+O problema está na definição do status HTTP para esse erro. O `agente_id` faz referência a um recurso externo (agente). Quando esse recurso não existe, o status correto a ser retornado é 404, pois o recurso referenciado não foi encontrado.
 
-No seu `sendErrorResponse` (que não foi enviado, mas imagino que esteja no `utils/errorHandler.js`), verifique se o status code passado está sendo respeitado corretamente e que o fluxo de validação no `createCaso` retorna 400 para erros de validação, como você já faz.
+**Como corrigir?**
 
-Se o problema persistir, uma hipótese é que o agente não existe, e você está retornando 404 em outro endpoint, mas para criação o correto é 400, pois o cliente enviou dados inválidos.
+No seu controller `createCaso`, ao detectar que o `agente_id` não existe, retorne status 404 ao invés de 400. Você pode fazer isso assim:
 
-**Resumo:** Para criação e atualização, erros de dados inválidos (como agente inexistente) devem retornar 400, não 404.
+```js
+if (!agentesRepository.findById(agente_id)) {
+    return sendErrorResponse(res, 404, "Agente responsável pelo caso não foi encontrado.");
+}
+```
+
+E remova essa validação do array `errors`, pois neste caso você já retorna o erro imediatamente.
+
+**Exemplo corrigido:**
+
+```js
+const createCaso = (req, res) => {
+    const { titulo, descricao, status, agente_id } = req.body;
+
+    if (!titulo || !descricao || !status || !agente_id) {
+        return sendErrorResponse(res, 400, 'Campos obrigatórios ausentes: titulo, descricao, status, agente_id.');
+    }
+    
+    if (status !== 'aberto' && status !== 'solucionado') {
+        return sendErrorResponse(res, 400, "O campo 'status' pode ser somente 'aberto' ou 'solucionado'");
+    }
+
+    if (!agentesRepository.findById(agente_id)) {
+        return sendErrorResponse(res, 404, "Agente responsável pelo caso não foi encontrado.");
+    }
+
+    const novoCaso = casosRepository.create({ titulo, descricao, status, agente_id });
+    res.status(201).json(novoCaso);
+};
+```
+
+Isso vai alinhar seu código com o protocolo HTTP esperado e evitar confusões para quem consome sua API.
+
+**Quer entender melhor quando usar os status 400 e 404? Veja este recurso:**  
+[Status 400 Bad Request e 404 Not Found - MDN](https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400) e  
+[Status 404 Not Found - MDN](https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404)
 
 ---
 
-### 4. Filtros e Ordenação Avançados nos Agentes — Falta Implementação Completa 🗂️
+### 3. Filtros e Ordenação para Agentes por Data de Incorporação e Busca por Palavras-Chave
 
-Você implementou o filtro por cargo e ordenação por data de incorporação no `agentesRepository.js`:
+Percebi que alguns testes bônus relacionados a filtros mais complexos não passaram, como:
+
+- Filtragem de agentes por data de incorporação com ordenação crescente e decrescente.
+- Busca de casos por palavras-chave no título e/ou descrição.
+- Mensagens de erro customizadas para argumentos de caso inválidos.
+
+Ao analisar seu código, vejo que:
+
+- Você implementou filtros simples para agentes por cargo e ordenação por `dataDeIncorporacao` em `agentesRepository.js`:
 
 ```js
 if (filters.sort === 'dataDeIncorporacao') {
@@ -116,110 +177,102 @@ if (filters.sort === 'dataDeIncorporacao') {
 }
 ```
 
-No entanto, os testes indicam que a filtragem por data de incorporação com ordenação crescente e decrescente não passou. Isso pode indicar que o parâmetro `sort` não está sendo passado corretamente via query string, ou que o controlador não está repassando esse filtro para o repositório.
+Porém, no controller `agentesController.js`, não vi que você está aceitando e repassando o filtro por data de incorporação para o repositório (por exemplo, um filtro para buscar agentes incorporados depois/depois de certa data).
 
-No seu controlador `getAllAgentes`, você faz:
+- Na busca de casos por palavra-chave (`q`), você já implementou no repositório `casosRepository.js` o filtro que busca no título e descrição, o que é ótimo! Mas no controller `casosController.js`, você repassa o parâmetro `q` para o repositório. Isso está correto.
+
+**Então, o que pode estar faltando?**
+
+- Talvez o filtro por data de incorporação para agentes não esteja implementado no controller, ou não está sendo corretamente passado para o repositório.
+- Também pode faltar um endpoint ou query param para filtrar agentes por data, o que é esperado em requisitos bônus.
+- Para as mensagens de erro customizadas para casos inválidos, vale revisar se você está retornando erros detalhados e personalizados para os casos, assim como fez para agentes.
+
+**Sugestão para filtro por data de incorporação no controlador de agentes:**
 
 ```js
-const { cargo, sort } = req.query;
-const filtros = {};
-if (cargo) filtros.cargo = cargo;
-if (sort) filtros.sort = sort;
+const getAllAgentes = (req, res) => {
+    const { cargo, sort, dataDeIncorporacao } = req.query;
+    const filtros = {};
+    if (cargo) filtros.cargo = cargo;
+    if (sort) filtros.sort = sort;
+    if (dataDeIncorporacao) filtros.dataDeIncorporacao = dataDeIncorporacao;
 
-const agentes = agentesRepository.findAll(filtros);
+    const agentes = agentesRepository.findAll(filtros);
+    res.status(200).json(agentes);
+};
 ```
 
-Isso parece correto. Então, o problema pode estar no teste, ou talvez no formato do parâmetro `sort` esperado (ex: `dataDeIncorporacao` ou `-dataDeIncorporacao`).
-
-Verifique se o cliente está enviando o parâmetro exatamente assim. Outra possibilidade é que o filtro de data esteja sendo aplicado, mas o teste espera alguma ordenação específica que não esteja sendo feita corretamente.
-
----
-
-### 5. Busca por Keywords no Título e Descrição dos Casos — Implementação Parcial 🕵️‍♂️
-
-Você implementou o filtro `q` no `casosRepository.js`:
+E no repositório, você pode filtrar:
 
 ```js
-if (filters.q) {
-    const query = filters.q.toLowerCase();
-    casosFiltrados = casosFiltrados.filter(caso => 
-        caso.titulo.toLowerCase().includes(query) || 
-        caso.descricao.toLowerCase().includes(query)
-    );
+if (filters.dataDeIncorporacao) {
+    const filtroData = new Date(filters.dataDeIncorporacao);
+    agentesFiltrados = agentesFiltrados.filter(agente => new Date(agente.dataDeIncorporacao) >= filtroData);
 }
 ```
 
-Isso está certo e atende ao requisito. Mas os testes bônus indicam falha nessa funcionalidade.
+Assim, você permite filtrar agentes incorporados a partir de uma data.
 
-Uma hipótese é que no controlador `getAllCasos` o filtro `q` não esteja sendo passado corretamente para o repositório, ou que o endpoint `/casos/search` não esteja implementado como esperado.
+---
 
-No seu arquivo `routes/casosRoutes.js`, você comenta que o endpoint `/casos/search?q=...` está implementado no `getAllCasos`, o que é uma boa prática.
+### 4. Organização e Estrutura do Projeto
 
-Se isso não está funcionando, vale conferir se o cliente está fazendo a requisição para `/casos/search` ou para `/casos?q=...` e se o roteamento está correto.
+Sua estrutura de pastas e arquivos está muito bem alinhada com o esperado! Isso é um ponto super positivo, pois facilita a manutenção e escalabilidade do projeto.
 
-Se o endpoint `/casos/search` não está definido explicitamente, o servidor pode não reconhecer essa rota. Você pode criar essa rota para redirecionar para o controlador `getAllCasos`:
-
-```js
-router.get('/casos/search', casosController.getAllCasos);
+```
+.
+├── controllers/
+│   ├── agentesController.js
+│   └── casosController.js
+├── repositories/
+│   ├── agentesRepository.js
+│   └── casosRepository.js
+├── routes/
+│   ├── agentesRoutes.js
+│   └── casosRoutes.js
+├── utils/
+│   └── errorHandler.js
+├── server.js
+├── package.json
 ```
 
-Assim, a busca por keywords funcionará tanto em `/casos?q=...` quanto em `/casos/search?q=...`.
+Parabéns por essa organização exemplar! 🎯
+
+Se quiser aprofundar mais na arquitetura MVC e organização de projetos Node.js, recomendo este vídeo:  
+[Arquitetura MVC em Node.js com Express](https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH)
 
 ---
 
-### 6. Estrutura de Diretórios — Atenção à Organização do Projeto 📁
+## 📚 Recursos Recomendados
 
-Sua estrutura está quase perfeita, mas notei que você não tem a pasta `docs/` com o arquivo `swagger.js` para documentação, que era opcional mas recomendada para organização.
-
-Além disso, a penalidade indica que a estrutura não foi seguida "à risca". Por exemplo, o arquivo `project_structure.txt` mostra a organização esperada, e seu projeto deveria seguir exatamente essa hierarquia.
-
-Confira se:
-
-- Todos os arquivos estão nas pastas corretas (`routes`, `controllers`, `repositories`, `utils`).
-- O arquivo principal é `server.js` (correto no seu caso).
-- Se possível, crie a pasta `docs/` para documentação futura.
-
-Manter a estrutura correta ajuda na manutenção e escalabilidade do projeto.
-
-Para entender melhor a arquitetura MVC aplicada a Node.js e Express, recomendo este vídeo:  
-https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH
+- [Como fazer validação de dados em APIs Node.js/Express](https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_)  
+- [Documentação oficial do Express.js sobre roteamento](https://expressjs.com/pt-br/guide/routing.html)  
+- [Status 400 Bad Request e 404 Not Found - MDN](https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400)  
+- [Status 404 Not Found - MDN](https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404)  
+- [Arquitetura MVC em Node.js com Express](https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH)  
 
 ---
 
-## 🌟 Resumo Rápido para Você Focar
+## 📝 Resumo dos Pontos para Focar e Melhorar
 
-- ✅ Continue com a boa organização entre rotas, controladores e repositórios.
-- ⚠️ Melhore a validação da data de incorporação para impedir datas futuras.
-- ⚠️ Implemente bloqueio para atualização do campo `id` em PUT e PATCH (retornando erro 400 se tentarem alterar).
-- ⚠️ Garanta que erros de dados inválidos (ex: `agente_id` inexistente) retornem status 400, não 404, especialmente em criação e atualização.
-- ⚠️ Verifique a implementação e uso dos filtros e ordenação no endpoint de agentes para garantir que funcionem conforme esperado.
-- ⚠️ Confirme a existência e roteamento correto para o endpoint `/casos/search` para habilitar a busca por keywords.
-- ⚠️ Ajuste a estrutura de diretórios para seguir o padrão exigido, incluindo a criação da pasta `docs/` para documentação.
+- **Validação do payload no PATCH para atualização parcial de agentes:** implemente validação rigorosa para garantir que o payload tem campos válidos e retorne 400 para formato incorreto.  
+- **Status HTTP correto na criação de casos com `agente_id` inválido:** retorne 404 quando o agente não existir, pois é uma referência a recurso inexistente.  
+- **Filtros avançados para agentes por data de incorporação:** implemente o filtro no controller e repositório para aceitar e filtrar por data, com ordenação.  
+- **Mensagens de erro personalizadas para casos inválidos:** garanta que erros retornem mensagens claras e detalhadas, como feito para agentes.  
+- **Continue testando e validando seu código para cobrir todos os casos de uso e garantir robustez.**
 
 ---
 
-## 🌈 Conclusão
+## Conclusão
 
-Você está no caminho certo, com uma base sólida e muitas funcionalidades importantes implementadas! Continue aprimorando as validações para garantir a integridade dos dados e a segurança da API, e ajuste a estrutura para ficar alinhada com as boas práticas. Isso fará seu projeto ficar ainda mais profissional e robusto. 🚀
+aalvesxy, seu trabalho está muito bem feito e você já domina os conceitos essenciais para construir APIs RESTful robustas com Node.js e Express. Com algumas melhorias pontuais, especialmente na validação de dados e alinhamento dos status HTTP, sua API vai ficar ainda mais profissional e confiável! 🚀
 
-Se precisar, dê uma revisitada nos conceitos de validação, tratamento de erros e arquitetura MVC com os recursos que indiquei — eles vão ajudar muito a destravar esses últimos detalhes!
+Continue assim, aprendendo e aprimorando seu código com calma e atenção aos detalhes. Estou aqui torcendo pelo seu sucesso! 💪✨
 
-Estou aqui torcendo pelo seu sucesso, e tenho certeza que com esses ajustes seu projeto vai ficar incrível! 💪✨
+Se precisar de ajuda, conte comigo! 😉
 
-Abraços de Code Buddy! 🤖💙
-
----
-
-### Recursos Recomendados para Você:
-
-- Validação de dados em APIs Node.js/Express: https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_  
-- Documentação e arquitetura MVC para Node.js: https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH  
-- Roteamento no Express.js: https://expressjs.com/pt-br/guide/routing.html  
-- Fundamentos de API REST e Express.js: https://youtu.be/RSZHvQomeKE  
-
----
-
-Continue firme, aalvesxy! Você está mandando muito bem! 🚓👮‍♂️🚓
+Abraços,  
+Seu Code Buddy 👨‍💻💙
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
